@@ -49,7 +49,7 @@ packing<-function(site.min, site.max, traits, mat, ncores=NULL) #here, site is t
 # 3/ selection of an assemblage at low NPP (A2= assemblage with 50% richness of A2, in NPP class 1)
 
 
-pack.biomes<-function(m, niter=10, ncores=NULL, tab)
+pack.biomes<-function(m, niter=10, ncores=NULL, tab, traits)
 {
   packs<-data.frame(matrix(ncol=20, nrow=0))
   names(packs)<-c("RxB", "Sample", "NPP low", "NPP medium", "NPP high",
