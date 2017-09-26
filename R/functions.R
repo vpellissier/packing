@@ -49,7 +49,7 @@ packing<-function(site.min, site.max, traits, mat, ncores=NULL) #here, site is t
 # 3/ selection of an assemblage at low NPP (A2= assemblage with 50% richness of A2, in NPP class 1)
 
 
-pack.biomes<-function(m, niter=10, ncores=NULL)
+pack.biomes<-function(m, niter=10, ncores=NULL, tab)
 {
   packs<-data.frame(matrix(ncol=20, nrow=0))
   names(packs)<-c("RxB", "Sample", "NPP low", "NPP medium", "NPP high",
@@ -58,7 +58,7 @@ pack.biomes<-function(m, niter=10, ncores=NULL)
   
   for (i in seq(niter))
   {
-    rs.tab4[rs.tab4$realms_x_biomes==m,]->rs.tab.region
+    tab[tab$realms_x_biomes==m,]->rs.tab.region
     if(m=="R1.B2") 
       rs.tab.region<-rs.tab.region[rs.tab.region$nppt<400,]
     
