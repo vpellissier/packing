@@ -1,47 +1,45 @@
 packing<-function(site.min, site.max, traits, mat, ncores=NULL) #here, site is the number/id of the cell
 {
   
-  a.min<-mat[site.min,]
-  a.max<-mat[site.max,]
+  convhulln(traits[site.min,], "FA")$vol->vol.min
+  convhulln(traits[site.max,], "FA")$vol->vol.max
   
-  convhulln(traits[names(a.min[a.min>0]),1:5], "FA")$vol->vol.min
-  convhulln(traits[names(a.max[a.max>0]),1:5], "FA")$vol->vol.max
-  
-  setdiff(names(a.max[a.max>0]), names(a.min[a.min>0]))->esp.unique.max
+  setdiff(site.max, site.min)->esp.unique.max
   length(esp.unique.max)->nbsp.unique.max
-  intersect(names(a.max[a.max>0]), names(a.min[a.min>0]))->esp.comm
+  intersect(site.min, site.max)->esp.comm
   esp.rem<-NULL
   
   volume.depaup<-rich.depaup<-vector()
+  
+  l.a.max.depaup<-lapply(esp.unique.max, function(x) c(setdiff(esp.unique.max,x), esp.comm))
+  
   for (i in seq(length(esp.unique.max)+length(esp.comm)))#length(esp.unique.max))
   {
     setdiff(esp.unique.max, esp.rem)->esp.unique.max
-    a.max.depaup<-as.data.frame(matrix(nrow=length(esp.unique.max), ncol=length(esp.unique.max), 1))
-    rownames(a.max.depaup)<-colnames(a.max.depaup)<-esp.unique.max
-    diag(a.max.depaup)<-0
-    a.max.depaup[,esp.comm]<-1
+    
+    l.a.max.depaup<-lapply(esp.unique.max, function(x) c(setdiff(esp.unique.max,x), esp.comm))
     
     if(!is.null(ncores))
     {
-      sfExport("a.max.depaup")
-      sfApply(a.max.depaup, 1, function(x) {convhulln(traits[names(x)[which(x>0)],1:5], options=c("FA", "QJ"))$vol})->fric.obs
+      force(l.a.max.depaup)
+      sfExport("l.a.max.depaup", envir=environment())
+      sfSapply(l.a.max.depaup, function(x) convhulln(traits[x,], options=c("FA", "QJ"))$vol)->fric.obs    
     }
     
     if(is.null(ncores))
     {
-      apply(a.max.depaup, 1, function(x) {convhulln(traits[names(x)[which(x>0)],1:5], options=c("FA", "QJ"))$vol})->fric.obs
+      sapply(l.a.max.depaup, function(x) convhulln(traits[x,], options=c("FA", "QJ"))$vol)->fric.obs
     }
     
-    names(which.max(vol.max-fric.obs))->esp.rem   #smallest difference
-    fric.obs[esp.rem]->volume.depaup[i]
-    sum(a.max.depaup[esp.rem,])->rich.depaup[i]
-    print(i)
-    if(fric.obs[esp.rem]<=vol.min) break
+    esp.unique.max[which.max(vol.max-fric.obs)]->esp.rem   #largest difference
+    fric.obs[which.max(vol.max-fric.obs)]->volume.depaup[i]
+    length(l.a.max.depaup[[which.max(vol.max-fric.obs)]])->rich.depaup[i]
+    
+    if(volume.depaup[i]<=vol.min) break
   }
-  return(list(pourc.pack=(1-((i-1)/sum(a.max)))*100, nb.esp.expansion=i-1, nb.esp.com=length(esp.comm), 
-              nb.esp.min=sum(a.min), nb.esp.max=sum(a.max)))
+  return(list(pourc.pack=(1-((i-1)/length(site.max)))*100, nb.esp.expansion=i-1, nb.esp.com=length(esp.comm), 
+              nb.esp.min=length(site.min), nb.esp.max=length(site.max)))
 }
-
 #################################
 # selection of 3 assemblages per biomes.
 # 1/ most diverse assemblage at high NPP (A1= richest assemblage in the cells having high NPP, as defined in 9 classes)
@@ -102,6 +100,14 @@ pack.biomes<-function(m, niter=10, ncores=NULL, tab, traits)
       sfExport("traits")
       sfLibrary(geometry)
     }
+    
+    cell.low.npp<-cooc_region[cell.low.npp,]
+    cell.medium.npp<-cooc_region[cell.medium.npp,]
+    cell.high.npp<-cooc_region[cell.high.npp,]
+    
+    cell.low.npp<-names(cell.low.npp[cell.low.npp>0])
+    cell.medium.npp<-names(cell.medium.npp[cell.medium.npp>0])
+    cell.high.npp<-names(cell.high.npp[cell.high.npp>0])
     
     packing(cell.low.npp, cell.high.npp, traits=traits, mat=cooc_region, ncores=ncores)->pack.LH
     packing(cell.medium.npp, cell.high.npp, traits=traits, mat=cooc_region, ncores=ncores)->pack.MH
