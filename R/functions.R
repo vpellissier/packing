@@ -22,7 +22,7 @@ packing<-function(site.min, site.max, traits, mat, ncores=NULL) #here, site is t
     if(!is.null(ncores))
     {
       force(l.a.max.depaup)
-      sfExport("l.a.max.depaup", envir=environment())
+      sfExport("l.a.max.depaup")
       sfSapply(l.a.max.depaup, function(x) convhulln(traits[x,], options=c("FA", "QJ"))$vol)->fric.obs    
     }
     
